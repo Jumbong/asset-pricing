@@ -52,6 +52,7 @@ class Pricer:
         #Récupérer les maturités et en déduire la différence de temps entre cette maturité et la date de
         # récupération des données considéré comme l'instant de pricing (08/12/2023) 
         maturities = list(self.option.data["Maturity"])
+        types = list(self.option.data["Type"])
         initial_date = datetime(2023, 12, 8)
         relative_maturities = []
         for maturity in maturities:
@@ -62,7 +63,7 @@ class Pricer:
 
         for i in range(len(strikes)):
             objective_function = lambda sigma: (black_scholes(self.option.S_0, strikes.iloc[i], 
-            relative_maturities[i], self.r, sigma, self.option.option_type) - prices.iloc[i])**2
+            relative_maturities[i], self.r, sigma, types[i]) - prices.iloc[i])**2
             result = minimize_scalar(objective_function)
             implied_vol = result.x
             volatilities.append(implied_vol)
