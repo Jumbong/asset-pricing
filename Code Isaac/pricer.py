@@ -63,7 +63,7 @@ class Pricer:
 
         for i in range(len(strikes)):
             objective_function = lambda sigma: (black_scholes(self.option.S_0, strikes.iloc[i], 
-            relative_maturities[i], self.r, sigma, types[i]) - prices.iloc[i])**2
+            relative_maturities[i], self.r, sigma, types[i].lower()) - prices.iloc[i])**2
             result = minimize_scalar(objective_function)
             implied_vol = result.x
             volatilities.append(implied_vol)
@@ -75,6 +75,7 @@ class Pricer:
     def calcul_impl_volatility(self):
         strike = self.option.strike
         strikes = list(self.option.data["Strike"])
+        types = list(self.option.data["Type"])
         volatilities = list(self.option.data["implied Volatility"])
 
         maturities = list(self.option.data["Maturity"])
@@ -86,7 +87,7 @@ class Pricer:
             rel_maturity = rel_maturity.years + rel_maturity.months / 12.0 + rel_maturity.days / 365.25
             relative_maturities.append(rel_maturity) 
         relative_maturities = relative_maturities
-        if (self.option.maturity, strike) in zip(relative_maturities, strikes):
+        if (self.option.maturity, strike, self.option.option_type) in zip(relative_maturities, strikes, types):
             small_data = self.option.data[relative_maturities==self.option.maturity and strikes==strike]
             volatility = float(small_data["implied Volatility"].iloc[0])
         else :
@@ -100,7 +101,7 @@ class Pricer:
         return black_scholes(self.option.S_0, self.option.strike, self.option.maturity, self.r, implied_vol, self.option.option_type)
 
 if __name__ == "__main__" :
-    call_aapl = Option("amzn", "call", 110, 0.75)
+    call_aapl = Option("aapl", "call", 190, 0.75)
     pricer_aapl = Pricer(call_aapl)
     pricer_aapl.data_volatilities()
     print("les volatilités implicites estimées")
