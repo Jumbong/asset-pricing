@@ -15,8 +15,6 @@ class BS_formula:
         self.r = option.r # risk-free rate
         self.person=person
         self.option=option
-        #opt_service=OptionsService()
-        #self._sigma = opt_service.calculate_historical_volatility(option,person) # historical return volatility
         self.sigma=sigma
         self.T = option.T # time 2 maturity
         self.d1 = (np.log(self.s0/self.k)+(self.r+self.sigma**2/2)*self.T) / (self.sigma * np.sqrt(self.T))

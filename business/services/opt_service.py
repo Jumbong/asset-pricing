@@ -57,15 +57,10 @@ class OptionsService:
     def get_volatilities(self,option,person):
         df=self.get_options_data(option,person)
         
-        #strikes = self.option.data["Strike"]
-        #prices = self.option.data['Last Price']
         strikes=df['Strike']
         prices=df['Last Price']
         volatilities = []
 
-        #Récupérer les maturités et en déduire la différence de temps entre cette maturité et la date de
-        # récupération des données considéré comme l'instant de pricing (08/12/2023) 
-        #maturities = list(self.option.data["Maturity"])
         relative_maturities = self.get_relative_maturity(df['Maturity'])
         
         types = df['Type']
@@ -82,39 +77,16 @@ class OptionsService:
         
         return df
 
-        #self.option.data["implied Volatility"] = volatilities
-        #self.option.data["implied Volatility"] = self.option.data["implied Volatility"].astype('float')
-    
     def calcul_impl_volatility(self,option,person):
         df=self.get_volatilities(option,person)
         
-        
-        #strike = self.option.strike
-        #strikes = list(self.option.data["Strike"])
-        #volatilities = list(self.option.data["implied Volatility"])
         strike=option.K
         strikes=df['Strike']
         types=df['Type']
         volatilities=df['implied Volatility']
 
-        # maturities = list(self.option.data["Maturity"])
-        # initial_date = datetime(2023, 12, 8)
-        # relative_maturities = []
-        # for maturity in maturities:
-            # temp_maturity = datetime(maturity.year, maturity.month, maturity.day)
-            # rel_maturity = relativedelta(temp_maturity, initial_date)
-            # rel_maturity = rel_maturity.years + rel_maturity.months / 12.0 + rel_maturity.days / 365.25
-            # relative_maturities.append(rel_maturity) 
-        # relative_maturities = relative_maturities
         relative_maturities = self.get_relative_maturity(df['Maturity'])
-        
-        # if (self.option.maturity, strike) in zip(relative_maturities, strikes):
-            # small_data = self.option.data[relative_maturities==self.option.maturity and strikes==strike]
-            # volatility = float(small_data["implied Volatility"].iloc[0])
-        # else :
-            # interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
-            # volatility = interp_func(self.option.strike, self.option.maturity)
-            
+         
         if (option.T,option.K,person.type) in zip(relative_maturities,strikes,types):
             small_data = df[relative_maturities==option.T and strikes==option.K]
             volatility = float(small_data["implied Volatility"].iloc[0])
