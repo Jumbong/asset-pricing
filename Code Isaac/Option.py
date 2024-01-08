@@ -26,7 +26,7 @@ class Option :
         self.ticker = ticker
         self.strike = strike
         self.maturity = maturity
-        if option_type == "Call" or option_type == "Put" :
+        if option_type == "call" or option_type == "put" :
             self.option_type = option_type
         else : 
             raise Exception("Sorry, the option type can anly be 'call' or 'put'")
@@ -35,17 +35,17 @@ class Option :
         elif ticker == "amzn":
             self.S_0 = 145.68
         elif ticker == "baba":
-            self.S_0 = 73,22
+            self.S_0 = 73.22
         elif ticker == "googl":
-            self.S_0 = 137,65
+            self.S_0 = 137.65
         elif ticker == "meta":
-            self.S_0 = 351,77
+            self.S_0 = 351.77
         elif ticker == "msft":
-            self.S_0 = 368,63
+            self.S_0 = 368.63
         elif ticker == "sony":
-            self.S_0 = 91,60
+            self.S_0 = 91.60
         elif ticker == "tsla":
-            self.S_0 = 238,93
+            self.S_0 = 238.93
         else:
             raise Exception("Sorry, choose one of 'aapl', 'amzn', 'baba', 'googl', 'meta', 'msft', 'sony', 'tsla'")
 
@@ -85,7 +85,7 @@ class Option :
 
 
 if __name__ == "__main__" :
-    call_aapl = Option("aapl", "Call", 185, 1)
+    call_aapl = Option("aapl", "call", 185, 1)
     call_aapl.recup_data()
     call_aapl.clean_data()
     print(call_aapl.data)

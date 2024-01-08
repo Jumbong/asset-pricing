@@ -27,11 +27,8 @@ class BS_formula:
         p = self.k*np.exp(-self.r*self.T)*norm.cdf(-self.d2) - self.s0*norm.cdf(-self.d1)
         
         if self.person.type=='Call':
-            
             return c
-        
         else:
-            
             return p
         
         
@@ -57,25 +54,30 @@ if __name__ == "__main__":
     from business.services.opt_service import OptionsService
     
     P=Person('Call')
-    O=Option('Google', 368.63, 100, 1)
-    opt_service=OptionsService()
-    print("Options Data:")
-    opt_service.get_options_data(O,P)
-    
-    print("Volatility:")
-    sigma=opt_service.calcul_impl_volatility(O,P)
-    print(sigma)
+    for name in ['Apple', 'Amazon', 'Ali baba', 'Google', 'Meta', 'Microsoft', 'Sony', 'Tesla']:
+        print(name)
+        O=Option(name=name, K=190, T=0.75,r=0.0525 )
+        opt_service=OptionsService()
+        print("Options Data:")
+        opt_service.get_options_data(O,P)
+        
+        #print("Implied Volatilities:")
+        #print(opt_service.get_volatilities(O,P))
+        
+        print("Volatility:")
+        sigma=opt_service.calcul_impl_volatility(O,P)
+        print(sigma)
 
-    # Create an instance of the Black-Scholes model
-    print("BS Price:")
-    bsm = BS_formula( O, P,sigma)
+        # Create an instance of the Black-Scholes model
+        print("BS Price:")
+        bsm = BS_formula( O, P,sigma)
 
-    # Calculate option prices
-    call_price = bsm.BS_price()
+        # Calculate option prices
+        call_price = bsm.BS_price()
 
-    print(f"The theoretical price of the call option is: {call_price}")
+        print(f"The theoretical price of the call option is: {call_price}")
 
-    print(30 * "-")
-    
+        print(30 * "-")
+        
     
     

@@ -18,9 +18,9 @@ def black_scholes(S_0, K, T, r, volatility, option_type):
     d1 = (np.log(S_0 / K) + (r + 0.5 * volatility**2) * T) / (volatility * np.sqrt(T))
     d2 = d1 - volatility * np.sqrt(T)
 
-    if option_type == 'Call':
+    if option_type == 'call':
         option_price = S_0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-    elif option_type == 'Put':
+    elif option_type == 'put':
         option_price = K * np.exp(-r * T) * norm.cdf(-d2) - S_0 * norm.cdf(-d1)
     else:
         raise ValueError("Type d'option non valide. Utilisez 'call' ou 'put'.")
@@ -89,6 +89,7 @@ class Pricer:
         relative_maturities = relative_maturities
         if (self.option.maturity, strike, self.option.option_type) in zip(relative_maturities, strikes, types):
             small_data = self.option.data[relative_maturities==self.option.maturity and strikes==strike]
+            
             volatility = float(small_data["implied Volatility"].iloc[0])
         else :
             interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
@@ -99,14 +100,15 @@ class Pricer:
         self.data_volatilities()
         implied_vol = self.calcul_impl_volatility()
         return black_scholes(self.option.S_0, self.option.strike, self.option.maturity, self.r, implied_vol, self.option.option_type)
-    
-    
 
 if __name__ == "__main__" :
-    call_aapl = Option("aapl", "call", 190, 0.75)
+    call_aapl = Option("baba", "call", 190, 0.75)
     pricer_aapl = Pricer(call_aapl)
     pricer_aapl.data_volatilities()
     print("les volatilités implicites estimées")
     print(pricer_aapl.option.data['implied Volatility'])
+    print("Volatilité:",pricer_aapl.calcul_impl_volatility())
     print("___________________________________________________\n Le prix de l'option est:")
     print(pricer_aapl.calcul_price())
+    
+    

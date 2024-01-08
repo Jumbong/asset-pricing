@@ -38,7 +38,7 @@ class OptionsService:
             name="tsla"
         
         df= pd.read_csv(f'data/cleaned_ListAllOptions{name}.csv')
-        #df_filtered=df[df['Type']==person.type]
+        df_filtered=df[df['Type']==person.type]
         return df
     
     def get_relative_maturity(self,maturities):
@@ -68,13 +68,12 @@ class OptionsService:
         #maturities = list(self.option.data["Maturity"])
         relative_maturities = self.get_relative_maturity(df['Maturity'])
         
+        types = df['Type']
+
         for i in range(len(strikes)):
-            option=Option(option.name,option.S0,strikes.iloc[i],relative_maturities[i],option.r)
-            if person.type=="Call":
-                objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
-            else :
-                objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
-                
+            option=Option(name=option.name,K=strikes.iloc[i],T=relative_maturities[i],r=option.r)
+            person=Person(types.iloc[i])
+            objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
             result = minimize_scalar(objective_function)
             implied_vol = result.x
             volatilities.append(implied_vol)
@@ -95,6 +94,7 @@ class OptionsService:
         #volatilities = list(self.option.data["implied Volatility"])
         strike=option.K
         strikes=df['Strike']
+        types=df['Type']
         volatilities=df['implied Volatility']
 
         # maturities = list(self.option.data["Maturity"])
@@ -115,7 +115,7 @@ class OptionsService:
             # interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
             # volatility = interp_func(self.option.strike, self.option.maturity)
             
-        if (option.T,option.K) in zip(relative_maturities,strikes):
+        if (option.T,option.K,person.type) in zip(relative_maturities,strikes,types):
             small_data = df[relative_maturities==option.T and strikes==option.K]
             volatility = float(small_data["implied Volatility"].iloc[0])
         else :
