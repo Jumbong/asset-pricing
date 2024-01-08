@@ -18,9 +18,9 @@ def black_scholes(S_0, K, T, r, volatility, option_type):
     d1 = (np.log(S_0 / K) + (r + 0.5 * volatility**2) * T) / (volatility * np.sqrt(T))
     d2 = d1 - volatility * np.sqrt(T)
 
-    if option_type == 'call':
+    if option_type == 'Call':
         option_price = S_0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-    elif option_type == 'put':
+    elif option_type == 'Put':
         option_price = K * np.exp(-r * T) * norm.cdf(-d2) - S_0 * norm.cdf(-d1)
     else:
         raise ValueError("Type d'option non valide. Utilisez 'call' ou 'put'.")
@@ -52,6 +52,7 @@ class Pricer:
         #Récupérer les maturités et en déduire la différence de temps entre cette maturité et la date de
         # récupération des données considéré comme l'instant de pricing (08/12/2023) 
         maturities = list(self.option.data["Maturity"])
+        types = list(self.option.data["Type"])
         initial_date = datetime(2023, 12, 8)
         relative_maturities = []
         for maturity in maturities:
@@ -62,7 +63,7 @@ class Pricer:
 
         for i in range(len(strikes)):
             objective_function = lambda sigma: (black_scholes(self.option.S_0, strikes.iloc[i], 
-            relative_maturities[i], self.r, sigma, self.option.option_type) - prices.iloc[i])**2
+            relative_maturities[i], self.r, sigma, types[i]) - prices.iloc[i])**2
             result = minimize_scalar(objective_function)
             implied_vol = result.x
             volatilities.append(implied_vol)
@@ -97,9 +98,11 @@ class Pricer:
         self.data_volatilities()
         implied_vol = self.calcul_impl_volatility()
         return black_scholes(self.option.S_0, self.option.strike, self.option.maturity, self.r, implied_vol, self.option.option_type)
+    
+    
 
 if __name__ == "__main__" :
-    call_aapl = Option("amzn", "call", 110, 0.75)
+    call_aapl = Option("msft", "Put", 100, 1)
     pricer_aapl = Pricer(call_aapl)
     pricer_aapl.data_volatilities()
     print("les volatilités implicites estimées")

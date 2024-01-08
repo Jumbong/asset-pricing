@@ -1,11 +1,8 @@
-from dash import Dash, html, dcc
+from view.start_view import StartView
 
-app = Dash(__name__)
-
-
-app.layout = html.Div([
-    dcc.Dropdown(['New York City', 'Montréal', 'San Francisco'], 'Montréal')
-])
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    current_view = StartView()
+    while current_view:
+        current_view.display()
+        current_view=current_view.choose()
+        

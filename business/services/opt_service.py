@@ -1,7 +1,19 @@
 from business.objects.option import Option
 from business.objects.person import Person
+from business.services.bs_formula import BS_formula
 import pandas as pd
 import numpy as np
+
+from scipy.interpolate import interp2d
+from scipy.optimize import minimize_scalar
+from scipy.stats import norm
+
+import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class OptionsService:
     def get_options_data(self, option,person):
@@ -25,28 +37,100 @@ class OptionsService:
         elif option.name=="TESLA":
             name="tsla"
         
-        df= pd.read_csv(f'data/ListAllOptions{name}.csv')
-        df_filtered=df[df['Type']==person.type]
-        return df_filtered
+        df= pd.read_csv(f'data/cleaned_ListAllOptions{name}.csv')
+        #df_filtered=df[df['Type']==person.type]
+        return df
     
-    def calculate_historical_volatility(self,option,person,window=252):
-        """
-        Calculate the annualized historical volatility of a stock.
-        """
+    def get_relative_maturity(self,maturities):
+        maturities= pd.to_datetime(maturities, format='%Y-%m-%d')
+
+        initial_date = datetime(2023, 12, 8)
+        relative_maturities = []
+        
+        for maturity in maturities:
+            temp_maturity = datetime(maturity.year, maturity.month, maturity.day)
+            rel_maturity = relativedelta(temp_maturity, initial_date)
+            rel_maturity = rel_maturity.years + rel_maturity.months / 12.0 + rel_maturity.days / 365.25
+            relative_maturities.append(rel_maturity)    
+        return relative_maturities
+    
+    def get_volatilities(self,option,person):
         df=self.get_options_data(option,person)
-        prices = df['Last Price']
-        log_returns = np.log(prices / prices.shift(1))
-        daily_std = np.std(log_returns)
-        annualized_std = daily_std * np.sqrt(window)
-        return annualized_std
+        
+        #strikes = self.option.data["Strike"]
+        #prices = self.option.data['Last Price']
+        strikes=df['Strike']
+        prices=df['Last Price']
+        volatilities = []
+
+        #Récupérer les maturités et en déduire la différence de temps entre cette maturité et la date de
+        # récupération des données considéré comme l'instant de pricing (08/12/2023) 
+        #maturities = list(self.option.data["Maturity"])
+        relative_maturities = self.get_relative_maturity(df['Maturity'])
+        
+        for i in range(len(strikes)):
+            option=Option(option.name,option.S0,strikes.iloc[i],relative_maturities[i],option.r)
+            if person.type=="Call":
+                objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
+            else :
+                objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
+                
+            result = minimize_scalar(objective_function)
+            implied_vol = result.x
+            volatilities.append(implied_vol)
+        
+        df['implied Volatility']=volatilities
+        
+        return df
+
+        #self.option.data["implied Volatility"] = volatilities
+        #self.option.data["implied Volatility"] = self.option.data["implied Volatility"].astype('float')
+    
+    def calcul_impl_volatility(self,option,person):
+        df=self.get_volatilities(option,person)
+        
+        
+        #strike = self.option.strike
+        #strikes = list(self.option.data["Strike"])
+        #volatilities = list(self.option.data["implied Volatility"])
+        strike=option.K
+        strikes=df['Strike']
+        volatilities=df['implied Volatility']
+
+        # maturities = list(self.option.data["Maturity"])
+        # initial_date = datetime(2023, 12, 8)
+        # relative_maturities = []
+        # for maturity in maturities:
+            # temp_maturity = datetime(maturity.year, maturity.month, maturity.day)
+            # rel_maturity = relativedelta(temp_maturity, initial_date)
+            # rel_maturity = rel_maturity.years + rel_maturity.months / 12.0 + rel_maturity.days / 365.25
+            # relative_maturities.append(rel_maturity) 
+        # relative_maturities = relative_maturities
+        relative_maturities = self.get_relative_maturity(df['Maturity'])
+        
+        # if (self.option.maturity, strike) in zip(relative_maturities, strikes):
+            # small_data = self.option.data[relative_maturities==self.option.maturity and strikes==strike]
+            # volatility = float(small_data["implied Volatility"].iloc[0])
+        # else :
+            # interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
+            # volatility = interp_func(self.option.strike, self.option.maturity)
+            
+        if (option.T,option.K) in zip(relative_maturities,strikes):
+            small_data = df[relative_maturities==option.T and strikes==option.K]
+            volatility = float(small_data["implied Volatility"].iloc[0])
+        else :
+            interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
+            volatility = interp_func(option.K, option.T)
+            
+        return volatility
 
 
 if __name__ == "__main__":
     P=Person('Call')
-    O=Option('Microsoft', 100, 100, 1)
+    O=Option('Google', 100, 100, 1)
     opt_service=OptionsService()
     print("Options Data:")
     opt_service.get_options_data(O,P)
     print("Volatility:")
-    print(opt_service.calculate_historical_volatility(O,P))
+    print(opt_service.calcul_impl_volatility(O,P))
     

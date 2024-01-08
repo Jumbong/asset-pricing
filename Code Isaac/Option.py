@@ -1,12 +1,12 @@
-import requests_html
+#import requests_html
 import datetime
 from datetime import datetime, timedelta
-import feedparser
-import io
-import json
+# import feedparser
+# import io
+# import json
 import pandas
-import requests
-import requests_html 
+# import requests
+#import requests_html 
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
@@ -26,7 +26,7 @@ class Option :
         self.ticker = ticker
         self.strike = strike
         self.maturity = maturity
-        if option_type == "call" or option_type == "put" :
+        if option_type == "Call" or option_type == "Put" :
             self.option_type = option_type
         else : 
             raise Exception("Sorry, the option type can anly be 'call' or 'put'")
@@ -50,7 +50,7 @@ class Option :
             raise Exception("Sorry, choose one of 'aapl', 'amzn', 'baba', 'googl', 'meta', 'msft', 'sony', 'tsla'")
 
     def recup_data(self):
-        name = "ListAllOptions"+self.ticker+".csv"
+        name = "data/ListAllOptions"+self.ticker+".csv"
         self.data = pd.read_csv(name)
 
     def clean_data(self):
@@ -85,10 +85,7 @@ class Option :
 
 
 if __name__ == "__main__" :
-    call_aapl = Option("aapl", "call", 185, 1)
+    call_aapl = Option("aapl", "Call", 185, 1)
     call_aapl.recup_data()
     call_aapl.clean_data()
     print(call_aapl.data)
-
-
-
