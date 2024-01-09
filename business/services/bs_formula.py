@@ -47,14 +47,13 @@ class BS_formula:
         return self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(self.d2), -self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(-self.d2)
 
 
-
 if __name__ == "__main__":
     from business.services.opt_service import OptionsService
     
-    P=Person('Call')
+    P=Person('Put')
     for name in ['Apple', 'Amazon', 'Ali baba', 'Google', 'Meta', 'Microsoft', 'Sony', 'Tesla']:
         print(name)
-        O=Option(name=name, K=190, T=0.75,r=0.0525 )
+        O=Option(name=name, K=73, T=0.75,r=0.0525 )
         opt_service=OptionsService()
         print("Options Data:")
         opt_service.get_options_data(O,P)
@@ -73,7 +72,7 @@ if __name__ == "__main__":
         # Calculate option prices
         call_price = bsm.BS_price()
 
-        print(f"The theoretical price of the call option is: {call_price}")
+        print(f"The theoretical price of the option is: {call_price}")
 
         print(30 * "-")
         
