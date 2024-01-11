@@ -31,20 +31,36 @@ class BS_formula:
         
         
     def BS_delta(self): # calc delta
-        return norm.cdf(self.d1), norm.cdf(self.d1)-1
+        delta_call = norm.cdf(self.d1)
+        delta_put = norm.cdf(self.d1)-1
+        if self.person.type=='Call':
+            return delta_call
+        else:
+            return delta_put
+        
     
     def BS_gamma(self): # calc gamma
-        return norm.pdf(self.d1)/(self.s0*self._sigma*np.sqrt(self.T)), norm.pdf(self.d1)/(self.s0*self._sigma*np.sqrt(self.T))
+        
+        return norm.pdf(self.d1)/(self.s0*self._sigma*np.sqrt(self.T))
     
     def BS_vega(self): # calc vega
-        return self.s0*np.sqrt(self.T)*norm.pdf(self.d1), self.s0*np.sqrt(self.T)*norm.pdf(self.d1)
+        return self.s0*np.sqrt(self.T)*norm.pdf(self.d1)
     
     def BS_theta(self): # calc theta 
         c_theta = -self.s0*norm.pdf(self.d1)*self._sigma / (2*np.sqrt(self.T)) - self.r*self.k*np.exp(-self.r*self.T)*norm.cdf(self.d2)
         p_theta = -self.s0*norm.pdf(self.d1)*self._sigma / (2*np.sqrt(self.T)) + self.r*self.k*np.exp(-self.r*self.T)*norm.cdf(-self.d2)
-        return c_theta, p_theta
+        
+        if self.person.type=='Call':
+            return c_theta
+        else:
+            return p_theta
+        
     def BS_rho(self): # calc rho  
-        return self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(self.d2), -self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(-self.d2)
+        if self.person.type=='Call':
+            return self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(self.d2)
+        else:
+            return -self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(-self.d2)
+        
 
 
 if __name__ == "__main__":
@@ -63,7 +79,7 @@ if __name__ == "__main__":
         
         print("Volatility:")
         sigma=opt_service.calcul_impl_volatility(O,P)
-        print(sigma)
+        print(f"{sigma[0]:.2f}")
 
         # Create an instance of the Black-Scholes model
         print("BS Price:")
@@ -72,9 +88,12 @@ if __name__ == "__main__":
         # Calculate option prices
         call_price = bsm.BS_price()
 
-        print(f"The theoretical price of the option is: {call_price}")
+        print(f"The theoretical price of the option is: {call_price[0]:.2f}")
 
         print(30 * "-")
+        
+        delta = bsm.BS_delta()
+        print(f"The delta of the option is: {delta[0]:.2f}")
         
     
     
