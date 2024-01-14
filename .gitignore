@@ -2,4 +2,6 @@ env
 *.pyc
 .env 
 .DS_Store
+*.csv
+
 

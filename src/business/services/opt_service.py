@@ -37,7 +37,7 @@ class OptionsService:
         elif option.name=="TESLA":
             name="tsla"
         
-        df= pd.read_csv(f'data/cleaned_ListAllOptions{name}.csv')
+        df= pd.read_csv(f'src/data/cleaned_ListAllOptions{name}.csv')
         df_filtered=df[df['Type']==person.type]
         return df
     
