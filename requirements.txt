@@ -16,4 +16,5 @@ mplfinance
 InquirerPy
 dash-bootstrap-components
 gunicorn
+dash-tools
 
