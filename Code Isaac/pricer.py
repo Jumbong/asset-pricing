@@ -102,7 +102,7 @@ class Pricer:
         return black_scholes(self.option.S_0, self.option.strike, self.option.maturity, self.r, implied_vol, self.option.option_type)
 
 if __name__ == "__main__" :
-    call_googl = Option("googl", "call", 73, 0.75)
+    call_googl = Option("aapl", "call", 100, 0)
     pricer_googl = Pricer(call_googl)
     pricer_googl.data_volatilities()
     print("les volatilités implicites estimées")
