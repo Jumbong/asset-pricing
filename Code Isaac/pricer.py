@@ -49,11 +49,12 @@ class Pricer:
         prices = self.option.data['Last Price']
         volatilities = []
 
-        #Récupérer les maturités et en déduire la différence de temps entre cette maturité et la date de
-        # récupération des données considéré comme l'instant de pricing (08/12/2023) 
+        #Récupérer les maturités et en déduire la différence de temps entre cette maturité et 
+        # la date de récupération des données 
+        # considérée comme l'instant de pricing (08/12/2023) pour les options de la base de données
         maturities = list(self.option.data["Maturity"])
         types = list(self.option.data["Type"])
-        initial_date = datetime(2023, 12, 8)
+        initial_date = datetime(2023,12,8)
         relative_maturities = []
         for maturity in maturities:
             temp_maturity = datetime(maturity.year, maturity.month, maturity.day)
@@ -62,7 +63,7 @@ class Pricer:
             relative_maturities.append(rel_maturity)
 
         for i in range(len(strikes)):
-            objective_function = lambda sigma: (black_scholes(self.option.S_0, strikes.iloc[i], 
+            objective_function = lambda sigma: (black_scholes(self.option.S_00, strikes.iloc[i], 
             relative_maturities[i], self.r, sigma, types[i].lower()) - prices.iloc[i])**2
             result = minimize_scalar(objective_function)
             implied_vol = result.x
@@ -79,7 +80,7 @@ class Pricer:
         volatilities = list(self.option.data["implied Volatility"])
 
         maturities = list(self.option.data["Maturity"])
-        initial_date = datetime(2023, 12, 8)
+        initial_date = datetime(2023,12,8)
         relative_maturities = []
         for maturity in maturities:
             temp_maturity = datetime(maturity.year, maturity.month, maturity.day)
@@ -89,7 +90,6 @@ class Pricer:
         relative_maturities = relative_maturities
         if (self.option.maturity, strike, self.option.option_type) in zip(relative_maturities, strikes, types):
             small_data = self.option.data[relative_maturities==self.option.maturity and strikes==strike]
-            
             volatility = float(small_data["implied Volatility"].iloc[0])
         else :
             interp_func = interp2d(strikes, relative_maturities, volatilities, kind='linear')
@@ -102,10 +102,10 @@ class Pricer:
         return black_scholes(self.option.S_0, self.option.strike, self.option.maturity, self.r, implied_vol, self.option.option_type)
 
 if __name__ == "__main__" :
-    call_googl = Option("aapl", "call", 100, 0)
-    pricer_googl = Pricer(call_googl)
-    pricer_googl.data_volatilities()
+    call_aapl = Option("aapl", "call", 180, 1)
+    pricer_aapl = Pricer(call_aapl)
+    pricer_aapl.data_volatilities()
     print("les volatilités implicites estimées")
-    print(pricer_googl.option.data['implied Volatility'])
+    print(pricer_aapl.option.data['implied Volatility'])
     print("___________________________________________________\n Le prix de l'option est:")
-    print(pricer_googl.calcul_price())
+    print(pricer_aapl.calcul_price())

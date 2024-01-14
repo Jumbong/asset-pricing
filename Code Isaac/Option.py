@@ -1,16 +1,17 @@
-#import requests_html
+import requests_html
 import datetime
 from datetime import datetime, timedelta
-# import feedparser
-# import io
-# import json
+import feedparser
+import io
+import json
 import pandas
-# import requests
-#import requests_html 
+import requests
+import requests_html 
 import pandas as pd
 import numpy as np
 from scipy.stats import norm
 from scipy.optimize import minimize_scalar
+from yahoo_fin.stock_info import get_live_price
 
 
 class Option :
@@ -30,27 +31,30 @@ class Option :
             self.option_type = option_type
         else : 
             raise Exception("Sorry, the option type can anly be 'call' or 'put'")
-        if ticker == "aapl" :
-            self.S_0= 182.01
-        elif ticker == "amzn":
-            self.S_0 = 145.68
-        elif ticker == "baba":
-            self.S_0 = 73.22
-        elif ticker == "googl":
-            self.S_0 = 137.65
-        elif ticker == "meta":
-            self.S_0 = 351.77
-        elif ticker == "msft":
-            self.S_0 = 368.63
-        elif ticker == "sony":
-            self.S_0 = 91.60
-        elif ticker == "tsla":
-            self.S_0 = 238.93
+        
+        tickers= ['aapl', 'amzn', 'tsla', 'googl', 'meta', 'msft', 'sony', 'baba']
+        if ticker in tickers :
+            self.S_0= get_live_price(ticker)
         else:
             raise Exception("Sorry, choose one of 'aapl', 'amzn', 'baba', 'googl', 'meta', 'msft', 'sony', 'tsla'")
-
+        if ticker == "aapl" :
+            self.S_00= 182.01
+        elif ticker == "amzn":
+            self.S_00 = 145.68
+        elif ticker == "baba":
+            self.S_00 = 73.22
+        elif ticker == "googl":
+            self.S_00 = 137.65
+        elif ticker == "meta":
+            self.S_00 = 351.77
+        elif ticker == "msft":
+            self.S_00 = 368.63
+        elif ticker == "sony":
+            self.S_00 = 91.60
+        elif ticker == "tsla":
+            self.S_00 = 238.93
     def recup_data(self):
-        name = "data/ListAllOptions"+self.ticker+".csv"
+        name = "ListAllOptions"+self.ticker+".csv"
         self.data = pd.read_csv(name)
 
     def clean_data(self):
@@ -89,3 +93,6 @@ if __name__ == "__main__" :
     call_aapl.recup_data()
     call_aapl.clean_data()
     print(call_aapl.data)
+
+
+
