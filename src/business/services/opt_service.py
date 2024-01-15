@@ -142,4 +142,5 @@ if __name__ == "__main__":
     opt_service.get_options_data(O,P)
     print("Volatility:")
     print(opt_service.calcul_impl_volatility(O,P))
+    opt_service.plot_volatilities(O, P)
     
