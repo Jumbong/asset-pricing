@@ -236,12 +236,12 @@ def update_s0(option, types):
 
 @app.callback(
     Output("id_volatility", "children"),
-    Output("id_price", "children"),
-    Output('delta', 'children'),
-    Output('gamma', 'children'),
-    Output('vega', 'children'),
-    Output('theta', 'children'),
-    Output('rho', 'children'),
+    # Output("id_price", "children"),
+    # Output('delta', 'children'),
+    # Output('gamma', 'children'),
+    # Output('vega', 'children'),
+    # Output('theta', 'children'),
+    # Output('rho', 'children'),
     Input("option-filter", "value"),
     Input("type-filter", "value"),
     Input("date", "date"),
@@ -261,15 +261,54 @@ def update_volatility(option, types, date, s0, strike, rate):
         opt_service=OptionsService()
         #print("Options Data:")
         sigma=opt_service.calcul_impl_volatility(O,P)
-        bsm = BS_formula( O, P,sigma)
-        price = f"{bsm.BS_price()[0]:.2f} €"
-        delta=f"{bsm.BS_delta()[0]:.2f}"
-        gamma=f"{bsm.BS_gamma()[0]:.2f}"
-        vega=f"{bsm.BS_vega()[0]:.2f}"
-        theta=f"{bsm.BS_theta()[0]:.2f}"
-        rho=f"{bsm.BS_rho()[0]:.2f}"
+        # bsm = BS_formula( O, P,sigma)
+        # price = f"{bsm.BS_price()[0]:.2f} €"
+        # delta=f"{bsm.BS_delta()[0]:.2f}"
+        # gamma=f"{bsm.BS_gamma()[0]:.2f}"
+        # vega=f"{bsm.BS_vega()[0]:.2f}"
+        # theta=f"{bsm.BS_theta()[0]:.2f}"
+        # rho=f"{bsm.BS_rho()[0]:.2f}"
         
-        return f"{sigma[0]:.2f}", price, delta, gamma, vega, theta, rho
+        return round(sigma[0],2)
+# Callback for the price take the option , the type and the sigma and return the price and the greeks
+
+@app.callback(
+    Output("id_price", "children"),
+    Output('delta', 'children'),
+    Output('gamma', 'children'),
+    Output('vega', 'children'),
+    Output('theta', 'children'),
+    Output('rho', 'children'),
+    Input("option-filter", "value"),
+    Input("type-filter", "value"),
+    Input("date", "date"),
+    Input("s0-filter", "value"),
+    Input("strike-filter", "value"),
+    Input("rate-filter", "value"),
+    Input("id_volatility", "children"),
+)
+def update_price(option, types, date, s0, strike, rate, sigma):
+    if s0 is None or strike is None or rate is None or sigma is None:
+        raise PreventUpdate
+    else:
+        O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
+        P=Person(types)
+        print(sigma)
+        
+        bsm = BS_formula( O, P,sigma=float(sigma))
+        print(bsm.BS_price())
+        price = f"{bsm.BS_price():.2f} €"
+        print(30*"*")
+        print(price)
+        delta=f"{bsm.BS_delta():.2f}"
+        print(delta)
+        gamma=f"{bsm.BS_gamma():.2f}"
+        vega=f"{bsm.BS_vega():.2f}"
+        theta=f"{bsm.BS_theta():.2f}"
+        
+        rho=f"{bsm.BS_rho():.2f}"
+        
+        return price, delta, gamma, vega, theta, rho
 
 
 

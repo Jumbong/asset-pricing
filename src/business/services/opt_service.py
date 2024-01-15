@@ -16,30 +16,30 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class OptionsService:
-    def get_options_data(self, option,person):
-        """
-        Get options data for a given symbol and time period.
-        """
-        if option.name=="APPLE":
-            name="aapl"
-        elif option.name=="AMAZON":
-            name="amzn"
-        elif option.name=="ALI BABA":
-            name="baba"
-        elif option.name=="GOOGLE":
-            name="googl"
-        elif option.name=="META":
-            name="meta"
-        elif option.name=="MICROSOFT":
-            name="msft"
-        elif option.name=="SONY":
-            name="sony"
-        elif option.name=="TESLA":
-            name="tsla"
+    # def get_options_data(self, option,person):
+    #     """
+    #     Get options data for a given symbol and time period.
+    #     """
+    #     if option.name=="APPLE":
+    #         name="aapl"
+    #     elif option.name=="AMAZON":
+    #         name="amzn"
+    #     elif option.name=="ALI BABA":
+    #         name="baba"
+    #     elif option.name=="GOOGLE":
+    #         name="googl"
+    #     elif option.name=="META":
+    #         name="meta"
+    #     elif option.name=="MICROSOFT":
+    #         name="msft"
+    #     elif option.name=="SONY":
+    #         name="sony"
+    #     elif option.name=="TESLA":
+    #         name="tsla"
         
-        df= pd.read_csv(f'src/data/cleaned_ListAllOptions{name}.csv')
-        df_filtered=df[df['Type']==person.type]
-        return df
+    #     df= pd.read_csv(f'src/data/cleaned_ListAllOptions{name}.csv')
+    #     df_filtered=df[df['Type']==person.type]
+    #     return df
     
     def get_relative_maturity(self,maturities):
         maturities= pd.to_datetime(maturities, format='%Y-%m-%d')
@@ -54,31 +54,53 @@ class OptionsService:
             relative_maturities.append(rel_maturity)    
         return relative_maturities
     
-    def get_volatilities(self,option,person):
-        df=self.get_options_data(option,person)
+    # def get_volatilities(self,option,person):
+    #     df=self.get_options_data(option,person)
         
-        strikes=df['Strike']
-        prices=df['Last Price']
-        volatilities = []
+    #     strikes=df['Strike']
+    #     prices=df['Last Price']
+    #     volatilities = []
 
-        relative_maturities = self.get_relative_maturity(df['Maturity'])
+    #     relative_maturities = self.get_relative_maturity(df['Maturity'])
         
-        types = df['Type']
+    #     types = df['Type']
 
-        for i in range(len(strikes)):
-            option=Option(name=option.name,K=strikes.iloc[i],T=relative_maturities[i],r=option.r)
-            person=Person(types.iloc[i])
-            objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
-            result = minimize_scalar(objective_function)
-            implied_vol = result.x
-            volatilities.append(implied_vol)
+    #     for i in range(len(strikes)):
+    #         option=Option(name=option.name,K=strikes.iloc[i],T=relative_maturities[i],r=option.r)
+    #         person=Person(types.iloc[i])
+    #         objective_function = lambda sigma: (BS_formula(option,person,sigma).BS_price() - prices.iloc[i])**2
+    #         result = minimize_scalar(objective_function)
+    #         implied_vol = result.x
+    #         volatilities.append(implied_vol)
         
-        df['implied Volatility']=volatilities
+    #     df['implied Volatility']=volatilities
         
-        return df
+    #     chemin_csv = f"clean_ListAllOptions{option.name}.csv"  # '..' signifie le dossier parent
+
+
+    #     df.to_csv(chemin_csv, index=False)
+        
+    #     return df
 
     def calcul_impl_volatility(self,option,person):
-        df=self.get_volatilities(option,person)
+        #df=self.get_volatilities(option,person)
+        if option.name=="APPLE":
+            name="APPLE"
+        elif option.name=="AMAZON":
+            name="AMAZON"
+        elif option.name=="ALI BABA":
+            name="ALI BABA"
+        elif option.name=="GOOGLE":
+            name="GOOGLE"
+        elif option.name=="META":
+            name="META"
+        elif option.name=="MICROSOFT":
+            name="MICROSOFT"
+        elif option.name=="SONY":
+            name="SONY"
+        elif option.name=="TESLA":
+            name="TESLA"
+        df= pd.read_csv(f'src/data/clean_ListAllOptions{name}.csv')
         
         strike=option.K
         strikes=df['Strike']
