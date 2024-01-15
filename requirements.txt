@@ -11,3 +11,4 @@ scipy==1.11.4
 yahoo_fin==0.8.9.1
 gunicorn
 dash-tools
+openpyxl

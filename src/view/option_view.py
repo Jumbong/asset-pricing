@@ -117,3 +117,51 @@ class OptionView(AbstractView):
         else:
             # QUIT
             pass
+
+    def plot_greeks(self, S_min, S_max) :
+        answers = prompt(self._questions)
+        option= Option(answers["option_name"],float(answers["S0"]),float(answers["K"]),float(answers["T"]),float(answers["r"]))
+        bsm = BS_formula(option, self.person)
+
+        def greeks(S):
+
+            d1 = (np.log(S / option.K) + (option.r + 0.5 * bsm._sigma**2) * option.T) / (bsm._sigma * np.sqrt(option.T))
+            d2 = d1 - bsm._sigma * np.sqrt(option.T)
+
+            # Delta
+            delta = norm.cdf(d1)
+
+            # Gamma
+            gamma = norm.pdf(d1) / (S * bsm._sigma * np.sqrt(option.T))
+
+            # Vega
+            vega = S * norm.pdf(d1) * np.sqrt(option.T)
+
+            return delta, gamma, vega
+
+        underlying_prices = np.linspace(S_min, S_max, 100)
+
+        delta_values, gamma_values, vega_values = zip(*[greeks(price) for price in underlying_prices])
+
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(131)
+        plt.plot(underlying_prices, delta_values, label='Delta')
+        plt.title('Delta')
+        plt.xlabel('Prix de l\'actif sous-jacent')
+        plt.legend()
+
+        plt.subplot(132)
+        plt.plot(underlying_prices, gamma_values, label='Gamma')
+        plt.title('Gamma')
+        plt.xlabel('Prix de l\'actif sous-jacent')
+        plt.legend()
+
+        plt.subplot(133)
+        plt.plot(underlying_prices, vega_values, label='Vega')
+        plt.title('Vega')
+        plt.xlabel('Prix de l\'actif sous-jacent')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()

@@ -4,6 +4,7 @@ from business.services.bs_formula import BS_formula
 import pandas as pd
 import numpy as np
 
+import plotly.graph_objects as go
 from scipy.interpolate import interp2d
 from scipy.optimize import minimize_scalar
 from scipy.stats import norm
@@ -117,6 +118,20 @@ class OptionsService:
             volatility = interp_func(option.K, option.T)
             
         return volatility
+
+    def plot_volatilities(self, option, person):
+
+        df = self.get_volatilities(option,person)
+        relative_maturities = np.array(self.get_relative_maturity(df['Maturity']))
+        strikes= np.array(df['Strike'])
+        volatilities= np.array(df['implied Volatility'])
+
+        fig = go.Figure(data=[go.Surface(z=volatilities, x=strikes, y=relative_maturities)])
+
+        fig.update_layout(scene=dict(xaxis_title='Strikes', yaxis_title='Maturities', zaxis_title='Volatilities'),
+                        scene_camera=dict(eye=dict(x=1.87, y=0.88, z=-0.64)))
+
+        fig.show()
 
 
 if __name__ == "__main__":
