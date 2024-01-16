@@ -20,7 +20,7 @@ class SwapPricer :
         tenor =  (dateval - self.valuationdate).days / 365.25
         interpolatedrate = np.interp(tenor, self.swap.ratecurve['tenor'], self.swap.ratecurve['rate'])
         frequency = 12 / frequency
-        return 1 / ((1 + interpolatedrate / frequency) ** (frequency * tenor))
+        return np.exp(-interpolatedrate*tenor)
 
     def ForwardRate(self, datefrom, frequency):
 
@@ -33,9 +33,7 @@ class SwapPricer :
 
         frequency = 12 / frequency
 
-        return ((((1 + interpolatedrateto / frequency) ** (tenorto * frequency)) 
-        / ((1 + interpolatedratefrom / frequency) 
-            ** (tenorfrom * frequency))) - 1) * frequency
+        return (np.exp(-interpolatedratefrom*tenorfrom)/np.exp(-interpolatedrateto*tenorto)-1) * frequency
 
 
     def CreateRollSchedule(self, leg):
@@ -87,12 +85,12 @@ class SwapPricer :
 
         return legschedule
 
-    def LegPV(self, leg):
+    def LegPV(self, leg, notional):
         legschedule = self.CreateRollSchedule(leg)
         print(f"Leg schedule: {legschedule}")
         pv = 0
         for row in legschedule:
-            pv = pv + self.swap.notional * float(row[1]) * float(row[2]) \
+            pv = pv + notional * float(row[1]) * float(row[2]) \
                 * (row[3]-row[0]).days / 365.25    
 
         return pv
@@ -106,7 +104,9 @@ class SwapPricer :
         else:
             fixedlegschedule = self.CreateRollSchedule('fixed')
 
-        presentvalue = self.LegPV('fixed') - self.LegPV('float')
+        #presentvalue = self.LegPV('fixed') - self.LegPV('float')
+        presentvalue = self.LegPV('fixed', self.swap.notional * self.swap.fixedmultiplier) \
+        + self.LegPV('float', self.swap.notional * -self.swap.fixedmultiplier)
 
         return presentvalue
 
@@ -115,9 +115,9 @@ if __name__ == "__main__" :
     testSwap = Swap("pay", 100000, 0.05, '14/01/2025', '15/01/2024', 6, 6, 'SOFR')
     testSwap.PrintSwapDetails()
     testswappricer = SwapPricer(testSwap, "14/01/2024")
-    print(testswappricer.LegPV('fixed'))
-    print(testswappricer.LegPV('float'))
-    print(testswappricer.swap_price())
+    print(testswappricer.LegPV('fixed', 100000))
+    print(testswappricer.LegPV('float', -100000))
+    print(f"Le prix que vous devez payer pour ce swap est: {-testswappricer.swap_price()}")
 
 
 

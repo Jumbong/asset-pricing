@@ -137,31 +137,29 @@ class OptionView(AbstractView):
             # Vega
             vega = S * norm.pdf(d1) * np.sqrt(option.T)
 
-            return delta, gamma, vega
+            # Theta
+            theta = -(S * norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - r * K * np.exp(-r * T) * norm.cdf(d2)
+
+            # Rho
+            rho = K * T * np.exp(-r * T) * norm.cdf(d2)
+
+            return delta, gamma, vega, theta, rho
 
         underlying_prices = np.linspace(S_min, S_max, 100)
 
-        delta_values, gamma_values, vega_values = zip(*[greeks(price) for price in underlying_prices])
+        greeks_values = np.array([greeks(price) for price in underlying_prices])
 
-        plt.figure(figsize=(12, 6))
+        # Plot des grecques
+        plt.figure(figsize=(12, 8))
 
-        plt.subplot(131)
-        plt.plot(underlying_prices, delta_values, label='Delta')
-        plt.title('Delta')
-        plt.xlabel('Prix de l\'actif sous-jacent')
-        plt.legend()
+        labels = ['Delta', 'Gamma', 'Vega', 'Theta', 'Rho']
 
-        plt.subplot(132)
-        plt.plot(underlying_prices, gamma_values, label='Gamma')
-        plt.title('Gamma')
-        plt.xlabel('Prix de l\'actif sous-jacent')
-        plt.legend()
-
-        plt.subplot(133)
-        plt.plot(underlying_prices, vega_values, label='Vega')
-        plt.title('Vega')
-        plt.xlabel('Prix de l\'actif sous-jacent')
-        plt.legend()
+        for i in range(5):
+            plt.subplot(2, 3, i + 1)
+            plt.plot(underlying_prices, greeks_values[:, i], label=labels[i])
+            plt.title(labels[i])
+            plt.xlabel('Prix de l\'actif sous-jacent')
+            plt.legend()
 
         plt.tight_layout()
         plt.show()
