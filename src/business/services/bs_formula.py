@@ -1,5 +1,5 @@
-from business.objects.option import Option
-from business.objects.person import Person
+from src.business.objects.option import Option
+from src.business.objects.person import Person
 import pandas as pd
 import numpy as np
 from scipy.stats import norm

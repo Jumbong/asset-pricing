@@ -1,6 +1,6 @@
-from business.objects.option import Option
-from business.objects.person import Person
-from business.services.bs_formula import BS_formula
+from src.business.objects.option import Option
+from src.business.objects.person import Person
+from src.business.services.bs_formula import BS_formula
 import pandas as pd
 import numpy as np
 
@@ -13,6 +13,12 @@ import datetime
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import warnings
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
+from mpl_toolkits.mplot3d import Axes3D
+
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -101,7 +107,7 @@ class OptionsService:
             name="SONY"
         elif option.name=="TESLA":
             name="TESLA"
-        df= pd.read_csv(f'src/data/clean_ListAllOptions{name}.csv')
+        df= pd.read_csv(f'src/data/clean_final_ListAllOptions{name}.csv')
         
         strike=option.K
         strikes=df['Strike']
@@ -121,26 +127,43 @@ class OptionsService:
 
     def plot_volatilities(self, option, person):
 
-        df = self.get_volatilities(option,person)
+        df = pd.read_csv(f'src/data/clean_ListAllOptions{option.name}.csv')
         relative_maturities = np.array(self.get_relative_maturity(df['Maturity']))
         strikes= np.array(df['Strike'])
         volatilities= np.array(df['implied Volatility'])
+        print(volatilities)
 
-        fig = go.Figure(data=[go.Surface(z=volatilities, x=strikes, y=relative_maturities)])
-
-        fig.update_layout(scene=dict(xaxis_title='Strikes', yaxis_title='Maturities', zaxis_title='Volatilities'),
-                        scene_camera=dict(eye=dict(x=1.87, y=0.88, z=-0.64)))
-
-        fig.show()
-
+        fig = go.Figure(data=[go.Surface(
+            x=strikes,
+            y=relative_maturities,
+            z=volatilities,
+            
+            )])
+        # modify the axis to correspond to the data range
+        # make the relative maturities axis logarithmic
+        fig.update_layout(title='Implied Volatility Surface',
+                          scene = dict(
+                          xaxis_title='Strike',
+                          yaxis_title='Relative Maturity',
+                          zaxis_title='Implied Volatility',
+                          xaxis=dict(range=[-10+min(strikes), max(strikes)+10],),
+                          yaxis=dict(range=[-0.2+min(relative_maturities), max(relative_maturities)]+0.2,),
+                          zaxis=dict(range=[min(volatilities), max(volatilities)],),),                          
+                          autosize=False,
+                          width=800, height=800,
+                          margin=dict(l=65, r=50, b=65, t=90))
+        
+        fig.write_html('first_figure.html', auto_open=True)
+        
+        
 
 if __name__ == "__main__":
     P=Person('Call')
     O=Option('Google', 100, 100, 1)
     opt_service=OptionsService()
     print("Options Data:")
-    opt_service.get_options_data(O,P)
     print("Volatility:")
     print(opt_service.calcul_impl_volatility(O,P))
     opt_service.plot_volatilities(O, P)
+    
     
