@@ -7,8 +7,14 @@ from scipy.stats import norm
 
 
 class BS_formula:
+    """ 
+    Objet qui se charge de faire les calculs liés à la formule de Black Scholes.
+    option (Option): Option à pricer
+    person (Person): Renferme le type de l'option
+    sigma (float): volatilité
+    """
 
-    def __init__(self, option,person,sigma): 
+    def __init__(self, option:Option,person:Person,sigma:float): 
             
         self.s0 = option.S0 # underlying asset price
         self.k = option.K # stike price
@@ -20,7 +26,10 @@ class BS_formula:
         self.d1 = (np.log(self.s0/self.k)+(self.r+self.sigma**2/2)*self.T) / (self.sigma * np.sqrt(self.T))
         self.d2 = ((np.log(self.s0/self.k)+(self.r+self.sigma**2/2)*self.T) / (self.sigma * np.sqrt(self.T))) - self.sigma*np.sqrt(self.T)
         
-    def BS_price(self): # calc theoretical price
+    def BS_price(self): 
+        """ 
+        Prix par la formule de Black Scholes.
+        """
         c = self.s0*norm.cdf(self.d1) - self.k*np.exp(-self.r*self.T)*norm.cdf(self.d2)
         p = self.k*np.exp(-self.r*self.T)*norm.cdf(-self.d2) - self.s0*norm.cdf(-self.d1)
         
@@ -30,23 +39,37 @@ class BS_formula:
             return p
         
         
-    def BS_delta(self): # calc delta
+    def BS_delta(self): 
+        """ 
+        Calcul du delta 
+        """
         delta_call = norm.cdf(self.d1)
         delta_put = norm.cdf(self.d1)-1
         if self.person.type=='Call':
             return delta_call
-        else:
+        else: 
             return delta_put
         
     
-    def BS_gamma(self): # calc gamma
+    def BS_gamma(self): 
+        """
+        Calcul du gamma
+        """
         
-        return norm.pdf(self.d1)/(self.s0*self.sigma*np.sqrt(self.T))
+        gamma_put_call= norm.pdf(self.d1)/(self.s0*self.sigma*np.sqrt(self.T))
+        return gamma_put_call
     
-    def BS_vega(self): # calc vega
-        return self.s0*np.sqrt(self.T)*norm.pdf(self.d1)
+    def BS_vega(self): 
+        """ 
+        Calcul du vega 
+        """
+        vega_put_call= self.s0*np.sqrt(self.T)*norm.pdf(self.d1)
+        return vega_put_call
     
-    def BS_theta(self): # calc theta 
+    def BS_theta(self):
+        """ 
+        Calcul du theta
+        """ 
         c_theta = -self.s0*norm.pdf(self.d1)*self.sigma / (2*np.sqrt(self.T)) - self.r*self.k*np.exp(-self.r*self.T)*norm.cdf(self.d2)
         p_theta = -self.s0*norm.pdf(self.d1)*self.sigma / (2*np.sqrt(self.T)) + self.r*self.k*np.exp(-self.r*self.T)*norm.cdf(-self.d2)
         
@@ -55,7 +78,10 @@ class BS_formula:
         else:
             return p_theta
         
-    def BS_rho(self): # calc rho  
+    def BS_rho(self): 
+        """ 
+        Calcul du rho
+        """ 
         if self.person.type=='Call':
             return self.k*self.T*np.exp(-self.r*self.T)*norm.cdf(self.d2)
         else:
