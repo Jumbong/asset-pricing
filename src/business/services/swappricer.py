@@ -1,21 +1,29 @@
-from swap import Swap
+from src.business.objects.swap import Swap
 
 import pandas as pd
 import numpy as np
 import math
 import copy
+from scipy.optimize import fsolve
 
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class SwapPricer :
-    def __init__(self, swap:Swap, valuationdate):
+    """ Classe permettant de pricer un swap de taux
+    swap (Swap): le swap à pricer
+    valuationdate (str): Date de pricing au format 'YYYY-MM-DD'
+    """
+    def __init__(self, swap:Swap, valuationdate:str):
         self.swap = swap
         self.swap.recup_data()
-        self.valuationdate = pd.to_datetime(valuationdate, format= "%d/%m/%Y")
+        self.valuationdate = pd.to_datetime(valuationdate, format= "%Y-%m-%d")
     
     def DiscountRate(self, dateval, frequency):
+        """ 
+        Calcul du taux obligataire pour une maturité donnée par dateval
+        """
 
         tenor =  (dateval - self.valuationdate).days / 365.25
         interpolatedrate = np.interp(tenor, self.swap.ratecurve['tenor'], self.swap.ratecurve['rate'])
@@ -23,6 +31,9 @@ class SwapPricer :
         return np.exp(-interpolatedrate*tenor)
 
     def ForwardRate(self, datefrom, frequency):
+        """ 
+        Calcul du taux forward pour une maturité donnée par datefrom+frquency
+        """
 
         tenorfrom =  (datefrom - self.valuationdate).days / 365.25
         interpolatedratefrom = np.interp(tenorfrom, self.swap.ratecurve['tenor'], self.swap.ratecurve['rate'])
@@ -36,7 +47,11 @@ class SwapPricer :
         return (np.exp(-interpolatedratefrom*tenorfrom)/np.exp(-interpolatedrateto*tenorto)-1) * frequency
 
 
-    def CreateRollSchedule(self, leg):
+    def CreateRollSchedule(self, leg:str):
+        """ Création d'un programme de paiements pour une jambe qui renvoie une liste de  
+        [la date courante de paiement, le taux forward, le taux obligataire, la prochaine date de paiement]
+        leg (str) : 'fixed' pour la jambe fixe ou 'float' pour la jambe variable
+        """
         if leg == 'fixed':
             legfrequency = self.swap.fixedfrequency
         elif leg=='float':
@@ -86,16 +101,22 @@ class SwapPricer :
         return legschedule
 
     def LegPV(self, leg, notional):
+        """ 
+        Calcul du prix d'une jambe
+        """
         legschedule = self.CreateRollSchedule(leg)
-        print(f"Leg schedule: {legschedule}")
         pv = 0
         for row in legschedule:
             pv = pv + notional * float(row[1]) * float(row[2]) \
                 * (row[3]-row[0]).days / 365.25    
 
         return pv
+    
 
     def swap_price(self) :
+        """ 
+        Calcul du prix du swap
+        """
 
         floatlegschedule = self.CreateRollSchedule('float')
         if (self.swap.fixedfrequency == self.swap.floatfrequency):
@@ -112,9 +133,9 @@ class SwapPricer :
 
 
 if __name__ == "__main__" :
-    testSwap = Swap("pay", 100000, 0.05, '14/01/2025', '15/01/2024', 6, 6, 'SOFR')
+    testSwap = Swap("pay", 100000, 0.05, '2025-01-14', '2024-01-15', 6, 6, 'SOFR')
     testSwap.PrintSwapDetails()
-    testswappricer = SwapPricer(testSwap, "14/01/2024")
+    testswappricer = SwapPricer(testSwap, "2024-01-14")
     print(testswappricer.LegPV('fixed', 100000))
     print(testswappricer.LegPV('float', -100000))
     print(f"Le prix que vous devez payer pour ce swap est: {-testswappricer.swap_price()}")

@@ -3,15 +3,30 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 class Swap :
-    def __init__(self, direction:str, notional:float, fixedrate:float, maturitydate, 
-                valuedate, floatfrequency:int, fixedfrequency:int, discountindex:str): 
+    """ 
+    Objet définissant un swap.
+    direction (str): 'pay' si le client est celui qui achète le taux fixe ou 'receive' dans le cas contraire
+    notional (float): le notionel
+    fixedrate (float): le taux fixe
+    maturitydate (str): la maturité au format'YYYY-MM-DD'
+    valuedate (str): date de valeur au format'YYYYY-MM-DD'
+    floatfrequency (int): la fréquence de paiement pour la jambe variable en mois
+    fixedfrequency (int): la fréquence de paiement pour la jambe fixe en mois
+    discountindex (float): L'indicateur à considérer pour le taux sans risque. 'SOFR', 'BGCR' ou 'TGCR'
+    """
+    def __init__(self, direction:str, notional:float, fixedrate:float, maturitydate:str, 
+                valuedate:str, floatfrequency:int, fixedfrequency:int, discountindex='SOFR'): 
                 #discountindex = SOFR ou BGCR ou TGCR
         self.direction = direction.lower()
         self.notional = notional
         self.fixedrate = fixedrate
-        self.maturitydate =  pd.to_datetime(maturitydate, format= "%d/%m/%Y")
-        self.valuedate = pd.to_datetime(valuedate, format= "%d/%m/%Y")
+        self.maturitydate =  pd.to_datetime(maturitydate, format= "%Y-%m-%d")
+        self.valuedate = pd.to_datetime(valuedate, format= "%Y-%m-%d")
         self.floatfrequency = floatfrequency
         self.fixedfrequency = fixedfrequency
         self.discountindex = discountindex
@@ -21,6 +36,9 @@ class Swap :
             self.fixedmultiplier = 1
 
     def PrintSwapDetails(self):
+        """ 
+        Afficher quelques détails du swap.
+        """
 
         swapdetails = 'Direction: ' + str(self.direction)+ '\n' + ' fixed rate: ' \
             + str(self.fixedrate) +'\n Date of value: '+ str(self.valuedate)+ '\n Maturity: ' \
@@ -29,7 +47,10 @@ class Swap :
         print(swapdetails)
 
     def recup_data(self):
-        NYFedRates = pd.read_excel("Swap/NYFedRates.xlsx")
+        """ 
+        Récupération des données de taux forward et de taux historiques.
+        """
+        NYFedRates = pd.read_excel("src/data/NYFedRates.xlsx")
         NYFedRates = NYFedRates[NYFedRates['Rate Type']== self.discountindex]
         NYFedRates['Effective Date'] = pd.to_datetime(NYFedRates['Effective Date']).dt.strftime("%d/%m/%Y")
         self.HistRates = NYFedRates[["Effective Date", "Rate Type", "Rate (%)"]] #format de date 'MM/DD/YYYY'
@@ -49,7 +70,7 @@ class Swap :
 
 
 if __name__ == "__main__" :
-    testSwap = Swap("pay", 100000, 0.05, '14/01/2025', '14/06/2024', 6, 6, 'SOFR')
+    testSwap = Swap("pay", 100000, 0.05, '2025-01-14', '2024-01-14', 6, 6, 'SOFR')
     testSwap.PrintSwapDetails()
     testSwap.recup_data()
     print(testSwap.HistRates)
