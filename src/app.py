@@ -187,7 +187,7 @@ card_figure_strike =  [
 
 
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
+app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR],suppress_callback_exceptions=True)
 
 server = app.server
 
@@ -376,6 +376,16 @@ app.layout = dbc.Container(
     Input("type-filter", "value"),
 )
 def update_s0(option, types):
+    """
+    This function take the option and the type and return the price of the underlying asset
+
+    Args:
+        option (string): option name
+        types (string): call or put
+
+    Returns:
+        float: price of the market of the underlying asset
+    """
     O=Option(option,K=None,T=None)
     return  O.S0
 
@@ -398,6 +408,22 @@ def update_s0(option, types):
     
 )
 def update_volatility(option, types, date, s0, strike, rate):
+    """
+    This function take the option, the type, the date, the s0, the strike and the rate and return the volatility
+    Args:
+        option (string): option name
+        types (string): call or put
+        date (string): date of maturity
+        s0 (string): price of the underlying asset
+        strike (_type_): strike price
+        rate (_type_): risk free rate
+
+    Raises:
+        PreventUpdate: prevent update
+
+    Returns:
+        float: volatility
+    """
     
     if s0 is None or strike is None or rate is None:
         raise PreventUpdate
@@ -435,20 +461,31 @@ def update_volatility(option, types, date, s0, strike, rate):
     Input("id_volatility", "children"),
 )
 def update_price(option, types, date, s0, strike, rate, sigma):
+    """_summary_
+
+    Args:
+        option (str): option name
+        types (str): call or put
+        date (date):    date of maturity
+        s0 (str):   price of the underlying asset
+        strike (int):   strike price
+        rate (int):     risk free rate
+        sigma (float):  volatility
+
+    Raises:
+        PreventUpdate: prevent update    
+
+    Returns:
+        tuple:  price, delta, gamma, vega, theta, rho
+    """
     if s0 is None or strike is None or rate is None or sigma is None:
         raise PreventUpdate
     else:
         O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
         P=Person(types)
-        print(sigma)
-        
         bsm = BS_formula( O, P,sigma=float(sigma))
-        print(bsm.BS_price())
         price = f"{bsm.BS_price():.2f} €"
-        print(30*"*")
-        print(price)
         delta=f"{bsm.BS_delta():.2f}"
-        print(delta)
         gamma=f"{bsm.BS_gamma():.2f}"
         vega=f"{bsm.BS_vega():.2f}"
         theta=f"{bsm.BS_theta():.2f}"
@@ -474,6 +511,16 @@ def update_price(option, types, date, s0, strike, rate, sigma):
 )
 
 def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max_S):
+    """
+    This function take the option, the type, the date, the s0, the strike and the rate and return the volatility
+    Args:
+        option (string): option name
+        types (string): call or put
+        date (string): date of maturity
+        s0 (string): price of the underlying asset
+        strike (_type_): strike price
+        rate (_type_): risk free rate
+    """
     if s0 is None or strike is None or rate is None or sigma is None:
         raise PreventUpdate
     else:
@@ -482,8 +529,6 @@ def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max
         d1 = (np.log(O.S0 / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
         d2 = d1 - sigma * np.sqrt(O.T)
 
-        print(d1)
-        print(d2)
         # Fonction qui calcule les greeks en fonction de S
         def greek(S,grecque):
             d1 = (np.log(S / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
@@ -535,6 +580,19 @@ def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max
     Input("max_K-filter", "value"),
 )
 def update_strike(option, types, date, s0, strike, rate, sigma, grecque,min_K,max_K):
+    """
+    This function take the option, the type, the date, the s0, the strike and the rate and return the volatility
+    Args:
+        option (string): option name
+        types (string): call or put
+        date (string): date of maturity
+        s0 (string): price of the underlying asset
+        strike (_type_): strike price
+        rate (_type_): risk free rate
+    returns:
+        figure: graph of the greek in function of the strike
+    """
+
     if s0 is None or strike is None or rate is None or sigma is None:
         raise PreventUpdate
     else:
@@ -543,8 +601,7 @@ def update_strike(option, types, date, s0, strike, rate, sigma, grecque,min_K,ma
         d1 = (np.log(O.S0 / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
         d2 = d1 - sigma * np.sqrt(O.T)
 
-        print(d1)
-        print(d2)
+        
         # Fonction qui calcule les greeks en fonction de S
         def greek(K,grecque):
             d1 = (np.log(O.S0 / K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
@@ -594,18 +651,28 @@ def update_strike(option, types, date, s0, strike, rate, sigma, grecque,min_K,ma
     Input("id_volatility", "children"),
 )
 def update_volatility_implicite(option, types, date, s0, strike, rate, sigma):
+    """ 
+    This function take the option, the type, the date, the s0, the strike and the rate and return the volatility
+    Args:
+        option (string): option name
+        types (string): call or put
+        date (string): date of maturity
+        s0 (string): price of the underlying asset
+        strike (_type_): strike price
+        rate (_type_): risk free rate
+    returns:
+        figure: graph of the volatility implicite
+    """
     if s0 is None or strike is None or rate is None or sigma is None:
         raise PreventUpdate
     else:
         O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
         df = pd.read_csv(f'src/data/clean_ListAllOptions{O.name}.csv')
-        #print(df.head(2))
         df['Maturity'] = pd.to_datetime(df['Maturity'], format="%Y-%m-%d")
         df['Maturity'] = df['Maturity'].apply(lambda x: x.strftime('%Y-%m-%d'))
-        #print(get_relative_maturity(df['Maturity']))
         df['Maturity'] = df['Maturity'].apply(lambda x: get_relative_maturity(x))
         
-        print(df[['Maturity']])
+        #print(df[['Maturity']])
         
     
         

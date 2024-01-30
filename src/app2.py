@@ -160,7 +160,7 @@ card_price_sw = [
     ),
 ]
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
+app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR], suppress_callback_exceptions=True)
 
 server = app.server
 
@@ -625,7 +625,7 @@ def page3_layout():
                     children=[
                         html.Div(children="Taux fixe", className="menu-title"),
                         dcc.Input(
-                            id="fixed_rate_sw",
+                            id="fixed_rate_sw_1",
                             type="number",
                             value=0.052,
                             style={"height": 50, "width":150, "border-radius": "1em", "border": "3px solid #ccc", "margin-bottom": 10},
@@ -886,7 +886,7 @@ def update_price_str(option, date, s0, strikec, strikep, rate, sigmac, sigmap):
     Input("discountindex", "value"),
     Input("fixed_frequency", "value"),
     Input("float_frequency", "value"),
-    Input("fixed_rate_sw", "value"),
+    Input("fixed_rate_sw_1", "value"),
 
 )
 
@@ -922,7 +922,7 @@ def update_swap_price(direction, notional, valuationdate, valuedate, maturity, d
     Input("discountindex", "value"),
     Input("fixed_frequency", "value"),
     Input("float_frequency", "value"),
-    Input("fixed_rate_sw", "value"),
+    Input("fixed_rate_sw_1", "value"),
 
 )
 
