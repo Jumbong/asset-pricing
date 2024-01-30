@@ -8,6 +8,12 @@ from business.services.bs_formula import BS_formula
 from business.objects.person import Person
 from dateutil.relativedelta import relativedelta
 from dash.exceptions import PreventUpdate
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import plotly.express as px
+import plotly.graph_objs as go
+from plotly.validator_cache import ValidatorCache
 
 
 
@@ -27,6 +33,8 @@ def get_relative_maturity(maturity):
 
 options = ["Apple", "Amazon", "Ali Baba", "Google", "Meta", "Microsoft", "Sony", "Tesla"]
 types=["Put","Call"]
+
+grecques=["Delta","Gamma","Vega","Theta","Rho"]
 
 card_volatility = [
     dbc.CardHeader( 
@@ -68,6 +76,116 @@ card_table = [
     ]),)
     
     ]
+
+card_figure_greek = [
+    dbc.CardHeader(html.H3("Graphique des grecques en fonction du sous-jacent", className="card-title"),),
+    dbc.CardBody(
+        [
+            dbc.Row([
+                dbc.Col(html.Div(
+                    children=[
+                        html.Div(children="Grecques", className="menu-title"),
+                        dcc.Dropdown(
+                            id="grecque-filter",
+                            options=[
+                                {"label": grecque, "value": grecque} for grecque in grecques
+                            ],
+                            value="Delta",
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},                            
+                            clearable=False,
+                        ),
+                    ]
+                )),
+                dbc.Col(
+                     html.Div(
+                    children=[
+                        html.Div(children="Min", className="menu-title"),
+                        dcc.Input(
+                            id="min_S-filter",
+                            type="number",
+                            value=100,
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},
+                        ),
+                    ],
+                ),
+                ),
+                dbc.Col(html.Div(
+                    children=[
+                        html.Div(children="Max", className="menu-title"),
+                        dcc.Input(
+                            id="max_S-filter",
+                            type="number",
+                            value=300,
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},
+                        ),
+                    ],
+                ),)
+                ]),
+         
+            dcc.Graph(
+                        id='greek-graph',
+                        figure={}
+                    )
+            
+        ]
+    ),
+]
+
+card_figure_strike =  [
+    dbc.CardHeader(html.H3("Graphique des grecques en fonction du strike", className="card-title"),),
+    dbc.CardBody(
+        [
+            dbc.Row([
+                dbc.Col(html.Div(
+                    children=[
+                        html.Div(children="Grecques", className="menu-title"),
+                        dcc.Dropdown(
+                            id="strike_final-filter",
+                            options=[
+                                {"label": grecque, "value": grecque} for grecque in grecques
+                            ],
+                            value="Delta",
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},                            
+                            clearable=False,
+                        ),
+                    ]
+                )),
+                dbc.Col(
+                     html.Div(
+                    children=[
+                        html.Div(children="Min", className="menu-title"),
+                        dcc.Input(
+                            id="min_K-filter",
+                            type="number",
+                            value=100,
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},
+                        ),
+                    ],
+                ),
+                ),
+                dbc.Col(html.Div(
+                    children=[
+                        html.Div(children="Max", className="menu-title"),
+                        dcc.Input(
+                            id="max_K-filter",
+                            type="number",
+                            value=300,
+                            style={"height": 40, "width":110, "border-radius": "1em", "border": "3px solid #ccc"},
+                        ),
+                    ],
+                ),)
+                ]),
+         
+            dcc.Graph(
+                        id='strike_final-graph',
+                        figure={}
+                    )
+            
+        ]
+    ),
+]
+
+
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR])
 
@@ -219,6 +337,35 @@ app.layout = dbc.Container(
             ]
             ,justify="around",
             style={"margin-top": 10},),
+        dbc.Row(
+            [
+                #two graphs here in two columns
+                dbc.Col([dbc.Card(card_figure_greek, color="white", inverse=False,outline=False)
+                    ]
+                        ,width={"size":5,"offset":1}),
+
+                
+                dbc.Col(dbc.Card(
+                    card_figure_strike
+                    , color="white", inverse=False,outline=False),
+                        ),
+            ]
+            ,justify="around",
+            style={"margin-top": 10},),
+        dbc.Row(
+            [
+                dbc.Col(html.Div(
+                    children=[
+                        html.Div(children="Volatilité implicite", className="menu-title"),
+                        dcc.Graph(
+                        id='volatility_implicite-graph',
+                        figure={}
+                    ),
+                    ]
+                ),
+                    width={"size":12}
+                    ),
+            ]),
         
     ],fluid=True    
 )
@@ -310,11 +457,163 @@ def update_price(option, types, date, s0, strike, rate, sigma):
         
         return price, delta, gamma, vega, theta, rho
 
+# The callback will depend of Option,type, maturity and rate and sigma
 
+@app.callback(
+    Output('greek-graph', 'figure'),
+    Input("option-filter", "value"),
+    Input("type-filter", "value"),
+    Input("date", "date"),
+    Input("s0-filter", "value"),
+    Input("strike-filter", "value"),
+    Input("rate-filter", "value"),
+    Input("id_volatility", "children"),
+    Input("grecque-filter", "value"),
+    Input("min_S-filter", "value"),
+    Input("max_S-filter", "value"),
+)
 
+def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max_S):
+    if s0 is None or strike is None or rate is None or sigma is None:
+        raise PreventUpdate
+    else:
+        O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
+        T = get_relative_maturity(date)
+        d1 = (np.log(O.S0 / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
+        d2 = d1 - sigma * np.sqrt(O.T)
 
+        print(d1)
+        print(d2)
+        # Fonction qui calcule les greeks en fonction de S
+        def greek(S,grecque):
+            d1 = (np.log(S / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
+            d2 = d1 - sigma * np.sqrt(O.T)
+            delta = norm.cdf(d1)
+            
+    
+                # Gamma
+            gamma = norm.pdf(d1) / (S * sigma * np.sqrt(O.T))
+    
+                # Vega
+            vega = S * norm.pdf(d1) * np.sqrt(O.T)
+    
+                # Theta
+            theta = -(S * norm.pdf(d1) * sigma) / (2 * np.sqrt(O.T)) - O.r * O.K * np.exp(-O.r * O.T) * norm.cdf(d2)
+    
+                # Rho
+            rho = O.K * O.T * np.exp(-O.r * O.T) * norm.cdf(d2)
+            
+            if grecque=="Delta":
+                return delta
+            elif grecque=="Gamma":
+                return gamma
+            elif grecque=="Vega":
+                return vega
+            elif grecque=="Theta":
+                return theta
+            else: 
+                return rho
+            
+        S = list(range(min_S,max_S))
+        greeks = [greek(i,grecque) for i in S]    
+            
+        # Change the color in red
+        fig = go.Figure(data=[go.Scatter(x=S, y=greeks, line=dict(color="red", width=2))])
 
+        return fig
+@app.callback(
+    Output('strike_final-graph', 'figure'),
+    Input("option-filter", "value"),
+    Input("type-filter", "value"),
+    Input("date", "date"),
+    Input("s0-filter", "value"),
+    Input("strike-filter", "value"),
+    Input("rate-filter", "value"),
+    Input("id_volatility", "children"),
+    Input("strike_final-filter", "value"),
+    Input("min_K-filter", "value"),
+    Input("max_K-filter", "value"),
+)
+def update_strike(option, types, date, s0, strike, rate, sigma, grecque,min_K,max_K):
+    if s0 is None or strike is None or rate is None or sigma is None:
+        raise PreventUpdate
+    else:
+        O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
+        T = get_relative_maturity(date)
+        d1 = (np.log(O.S0 / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
+        d2 = d1 - sigma * np.sqrt(O.T)
 
+        print(d1)
+        print(d2)
+        # Fonction qui calcule les greeks en fonction de S
+        def greek(K,grecque):
+            d1 = (np.log(O.S0 / K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
+            d2 = d1 - sigma * np.sqrt(O.T)
+            delta = norm.cdf(d1)
+            
+    
+                # Gamma
+            gamma = norm.pdf(d1) / (O.S0 * sigma * np.sqrt(O.T))
+    
+                # Vega
+            vega = O.S0 * norm.pdf(d1) * np.sqrt(O.T)
+    
+                # Theta
+            theta = -(O.S0 * norm.pdf(d1) * sigma) / (2 * np.sqrt(O.T)) - O.r * K * np.exp(-O.r * O.T) * norm.cdf(d2)
+    
+                # Rho
+            rho = K * O.T * np.exp(-O.r * O.T) * norm.cdf(d2)
+            
+            if grecque=="Delta":
+                return delta
+            elif grecque=="Gamma":
+                return gamma
+            elif grecque=="Vega":
+                return vega
+            elif grecque=="Theta":
+                return theta
+            else: 
+                return rho
+            
+        K = list(range(min_K,max_K))
+        greeks = [greek(i,grecque) for i in K]    
+            
+        
+        # Mettre la cour
+        fig = go.Figure(data=[go.Scatter(x=K, y=greeks)])
+        return fig
+    
+@app.callback(
+    Output('volatility_implicite-graph', 'figure'),
+    Input("option-filter", "value"),
+    Input("type-filter", "value"),
+    Input("date", "date"),
+    Input("s0-filter", "value"),
+    Input("strike-filter", "value"),
+    Input("rate-filter", "value"),
+    Input("id_volatility", "children"),
+)
+def update_volatility_implicite(option, types, date, s0, strike, rate, sigma):
+    if s0 is None or strike is None or rate is None or sigma is None:
+        raise PreventUpdate
+    else:
+        O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
+        df = pd.read_csv(f'src/data/clean_ListAllOptions{O.name}.csv')
+        #print(df.head(2))
+        df['Maturity'] = pd.to_datetime(df['Maturity'], format="%Y-%m-%d")
+        df['Maturity'] = df['Maturity'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        #print(get_relative_maturity(df['Maturity']))
+        df['Maturity'] = df['Maturity'].apply(lambda x: get_relative_maturity(x))
+        
+        print(df[['Maturity']])
+        
+    
+        
+        
+        fig = px.scatter_3d(df, x='Strike', y='Maturity', z='implied Volatility')
+        
+        return fig
+        
 
 if __name__ == "__main__":
     app.run_server(debug=True)
