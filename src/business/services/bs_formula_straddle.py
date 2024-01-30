@@ -34,7 +34,9 @@ class BS_formula_Straddle:
         
     def BS_price(self): 
         """ 
-        Prix par la formule de Black Scholes.
+        Prix par la formule de Black Scholes. 
+        Somme du prix du call (calculé avec sa maturité et sa volatilité propres) et 
+        du prix du put (calculé avec sa maturité et sa volatilité propres)
         """
         c = self.s0*norm.cdf(self.d1_c) - self.kc*np.exp(-self.r*self.T)*norm.cdf(self.d2_c)
         p = self.kp*np.exp(-self.r*self.T)*norm.cdf(-self.d2_p) - self.s0*norm.cdf(-self.d1_p)
@@ -44,7 +46,7 @@ class BS_formula_Straddle:
         
     def BS_delta(self): 
         """ 
-        Calcul du delta 
+        Calcul du delta. Somme des delta du call et du put, chacun avec ses caractéristiques propres.
         """
         delta_call = norm.cdf(self.d1_c)
         delta_put = norm.cdf(self.d1_p)-1
@@ -53,20 +55,20 @@ class BS_formula_Straddle:
     
     def BS_gamma(self): 
         """
-        Calcul du gamma
+        Calcul du gamma. Somme des gamma du call et du put, chacun avec ses caractéristiques propres
         """
 
         return norm.pdf(self.d1_c)/(self.s0*self.sigmac*np.sqrt(self.T)) + norm.pdf(self.d1_p)/(self.s0*self.sigmap*np.sqrt(self.T))
     
     def BS_vega(self): 
         """ 
-        Calcul du vega 
+        Calcul du vega. Somme des vega du call et du put, chacun avec ses caractéristiques propres 
         """
         return  self.s0*np.sqrt(self.T)*norm.pdf(self.d1_c) +  self.s0*np.sqrt(self.T)*norm.pdf(self.d1_p)
     
     def BS_theta(self):
         """ 
-        Calcul du theta
+        Calcul du theta. Somme des theta du call et du put, chacun avec ses caractéristiques propres
         """ 
         c_theta = -self.s0*norm.pdf(self.d1_c)*self.sigmac / (2*np.sqrt(self.T)) - self.r*self.kc*np.exp(-self.r*self.T)*norm.cdf(self.d2_c)
         p_theta = -self.s0*norm.pdf(self.d1_p)*self.sigmap / (2*np.sqrt(self.T)) + self.r*self.kp*np.exp(-self.r*self.T)*norm.cdf(-self.d2_p)
@@ -75,7 +77,7 @@ class BS_formula_Straddle:
         
     def BS_rho(self): 
         """ 
-        Calcul du rho
+        Calcul du rho. Somme des rho du call et du put, chacun avec ses caractéristiques propres
         """ 
         rho_c = self.kc*self.T*np.exp(-self.r*self.T)*norm.cdf(self.d2_c)
         rho_p = -self.kp*self.T*np.exp(-self.r*self.T)*norm.cdf(-self.d2_p)
@@ -93,9 +95,6 @@ if __name__ == "__main__":
         P = Option(name=name, K=50, T=0,r=0.052 )
         opt_service=OptionsService()
         
-        #print("Implied Volatilities:")
-        #print(opt_service.get_volatilities(O,P))
-        
         print("Volatility:")
         sigmap=opt_service.calcul_impl_volatility(P,Pp)
         print(f"{sigmap[0]:.2f}")
@@ -103,11 +102,9 @@ if __name__ == "__main__":
         print(f"{sigmac[0]:.2f}")
 
 
-        # Create an instance of the Black-Scholes model
         print("BS Price:")
         bsm_s = BS_formula_Straddle(C, P, sigmac, sigmap)
 
-        # Calculate option prices
         straddle_price = bsm_s.BS_price()
 
         print(f"The theoretical price of the Straddle is: {straddle_price[0]:.2f}")

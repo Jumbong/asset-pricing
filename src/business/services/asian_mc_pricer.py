@@ -7,6 +7,15 @@ from scipy.stats import norm
 
 
 class AsianMCPricer:
+    """ 
+    Permet de pricer une option asiatique grâce à la méthode de Monte Carlo dans le contexte de l'équation de Black Scholes.
+    option (Option): L'option à pricer
+    person (Person): Indique s'il s'agit d'un call ou d'un put
+    sigma (float): Volatilité (historique)
+    n_simulations (int): Nombre de simulations Monte Carlo à considérer
+    fen (int): Le nombre de jours sur lesquels la moyenne est prise dans le calcul du prix moyen. 
+               La valeur par défaut est 20 jours ouvrés soit environ un mois.
+    """
 
     def __init__(self, option: Option,person: Person,sigma: float, n_simulations:int, fen=20): 
             
@@ -20,14 +29,17 @@ class AsianMCPricer:
         self.fen = fen
         self.n_simulations = n_simulations
         
-    def MC_price(self, S, sigma): # calc theoretical price
+    def MC_price(self, S, sigma):
+        """ 
+        Calcul du prix par Monte Carlo
+        """
 
         dt = self.T / 252  # 252 jours ouvrés dans l'année
     
         call_prices = []
         put_prices = []
 
-        for _ in range(self.n_simulations):
+        for m in range(self.n_simulations):
             prices = [S]
             
             for i in range(1, 253):
@@ -50,7 +62,7 @@ class AsianMCPricer:
             return p
         
         
-    def MC_delta(self, epsilon): 
+    def MC_delta(self, epsilon=0.1): 
         """
         Calcul du delta par la méthode des différences finies
         epsilon: incrément infinitésimal à considérer
@@ -59,16 +71,18 @@ class AsianMCPricer:
         
         
     
-    def MC_gamma(self, epsilon): 
+    def MC_gamma(self, epsilon=0.1): 
         """
         Calcul du gamma par la méthode des différences finies
         epsilon: incrément infinitésimal à considérer
         """
-
-        
         return (self.MC_price(self.s0+epsilon, self.sigma)+self.MC_price(self.s0-epsilon, self.sigma)-2*self.MC_price(self.s0, self.sigma))/epsilon**2
     
-    def MC_vega(self): # calc vega
+    def MC_vega(self, epsilon=0.01): # calc vega
+        """
+        Calcul du vega par la méthode des différences finies
+        epsilon: incrément infinitésimal à considérer
+        """
         return (self.MC_price(self.s0, self.sigma+epsilon)-self.MC_price(self.s0, self.sigma))/epsilon
         
 
@@ -77,7 +91,7 @@ if __name__ == "__main__":
     
     P=Person('Put')
     for name in ['Apple', 'Amazon', 'Ali baba', 'Google', 'Meta', 'Microsoft', 'Sony', 'Tesla']:
-        print(name)
+        name = name.upper()
         O=Option(name=name, K=180, T=1,r=0.052 )
         opt_service=OptionsService()
         
@@ -99,7 +113,13 @@ if __name__ == "__main__":
 
         print(30 * "-")
         
-        delta = MCPricer.MC_delta(0.001)
+        delta = MCPricer.MC_delta(0.1)
         print(f"The delta of the option is: {delta:.2f}")
+
+        gamma = MCPricer.MC_gamma(0.1)
+        print(f"The gamma of the option is: {gamma:.2f}")
+
+        vega = MCPricer.MC_vega(0.01)
+        print(f"The vega of the option is: {vega:.2f}")
         break
         

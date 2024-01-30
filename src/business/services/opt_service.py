@@ -23,8 +23,16 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class OptionsService:
+    """
+    Permet de faire quelques opérations utiles sur les options
+    """
     
-    def get_relative_maturity(self,maturities):
+    def get_relative_maturity(self,maturities:list):
+        """
+        Transforme les dates en durée relativement à la date de récupération 
+        des données qui est considérée comme la date de pricing pour l'option Européenne.
+        maturities (list): liste contenant les dates à transformer en durée.
+        """
         maturities= pd.to_datetime(maturities, format='%Y-%m-%d')
 
         initial_date = datetime(2023, 12, 8)
@@ -37,7 +45,12 @@ class OptionsService:
             relative_maturities.append(rel_maturity)    
         return relative_maturities
 
-    def calcul_impl_volatility(self,option,person):
+    def calcul_impl_volatility(self,option:Option,person: Person):
+        """
+        Calcul la volatilité implicite d'une option
+        option (Option): Objet de type option
+        person (Person): Renferme le type de l'option
+        """
 
         if option.name=="APPLE":
             name="APPLE"
@@ -81,6 +94,11 @@ class OptionsService:
         return volatility
 
     def calcul_hist_volatility(self,option,person):
+        """
+        Calcul la volatilité historique. Pour cela on se sert des données sur l'historique des prix du sous jacent sur 5 ans.
+        option (Option): Objet de type option
+        person (Person): Renferme le type de l'option
+        """
         df= pd.read_csv(f'src/data/StockPrices{option.name}.csv')
 
         returns = np.log(df['close'] / df['close'].shift(1))

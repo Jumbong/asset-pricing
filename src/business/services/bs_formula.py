@@ -8,7 +8,7 @@ from scipy.stats import norm
 
 class BS_formula:
     """ 
-    Objet qui se charge de faire les calculs liés à la formule de Black Scholes.
+    Objet qui se charge de faire les calculs liés à la formule de Black Scholes pour les options Européennes.
     option (Option): Option à pricer
     person (Person): Renferme le type de l'option
     sigma (float): volatilité
@@ -28,7 +28,7 @@ class BS_formula:
         
     def BS_price(self): 
         """ 
-        Prix par la formule de Black Scholes.
+        Prix de l'option par la formule fermée du modèle de Black Scholes.
         """
         c = self.s0*norm.cdf(self.d1) - self.k*np.exp(-self.r*self.T)*norm.cdf(self.d2)
         p = self.k*np.exp(-self.r*self.T)*norm.cdf(-self.d2) - self.s0*norm.cdf(-self.d1)
