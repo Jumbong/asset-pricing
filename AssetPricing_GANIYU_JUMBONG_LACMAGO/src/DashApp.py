@@ -1300,18 +1300,11 @@ def update_volatility(option, types, date, s0, strike, rate):
             raise PreventUpdate
         else:
             O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
-            #print(O.name,O.K,O.T,O.r)
             P=Person(types)
             opt_service=OptionsService()
-            #print("Options Data:")
+
             sigma=opt_service.calcul_impl_volatility(O,P)
-            # bsm = BS_formula( O, P,sigma)
-            # price = f"{bsm.BS_price()[0]:.2f} €"
-            # delta=f"{bsm.BS_delta()[0]:.2f}"
-            # gamma=f"{bsm.BS_gamma()[0]:.2f}"
-            # vega=f"{bsm.BS_vega()[0]:.2f}"
-            # theta=f"{bsm.BS_theta()[0]:.2f}"
-            # rho=f"{bsm.BS_rho()[0]:.2f}"
+
             
             return round(sigma[0],2)
 # Callback for the price take the option , the type and the sigma and return the price and the greeks
@@ -1340,15 +1333,12 @@ def update_price(option, types, date, s0, strike, rate, sigma):
         else:
             O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
             P=Person(types)
-            print(sigma)
+
             
             bsm = BS_formula( O, P,sigma=float(sigma))
-            print(bsm.BS_price())
             price = f"{bsm.BS_price():.2f} €"
-            print(30*"*")
-            print(price)
             delta=f"{bsm.BS_delta():.2f}"
-            print(delta)
+
             gamma=f"{bsm.BS_gamma():.2f}"
             vega=f"{bsm.BS_vega():.2f}"
             theta=f"{bsm.BS_theta():.2f}"
@@ -1536,13 +1526,11 @@ def update_volatility_implicite(option, types, date, s0, strike, rate, sigma):
         else:
             O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
             df = pd.read_csv(f'src/data/clean_ListAllOptions{O.name}.csv')
-            #print(df.head(2))
+
             df['Maturity'] = pd.to_datetime(df['Maturity'], format="%Y-%m-%d")
             df['Maturity'] = df['Maturity'].apply(lambda x: x.strftime('%Y-%m-%d'))
-            #print(get_relative_maturity(df['Maturity']))
+
             df['Maturity'] = df['Maturity'].apply(lambda x: get_relative_maturity(x))
-            
-            print(df[['Maturity']])
             
         
             
@@ -1628,16 +1616,13 @@ def update_price_str(option, date, s0, strikec, strikep, rate, sigmac, sigmap):
             Pc=Person("Call")
             Pp=Person("Put")
 
-            print(f"{sigmac}")
-            print(f"{sigmap}")
             
             bsm_str = BS_formula_Straddle(C, P, sigmac, sigmap)
-            print(bsm_str.BS_price())
+
             price = f"{bsm_str.BS_price():.2f} €"
-            print(30*"*")
-            print(price)
+
             delta=f"{bsm_str.BS_delta():.2f}"
-            print(delta)
+
             gamma=f"{bsm_str.BS_gamma():.2f}"
             vega=f"{bsm_str.BS_vega():.2f}"
             theta=f"{bsm_str.BS_theta():.2f}"
@@ -1946,7 +1931,6 @@ def update_swap_price(direction, notional, valuationdate, valuedate, maturity, d
         return no_update
     else:
         if valuationdate is None or valuedate is None or maturity is None or fixed_frequency is None or float_frequency is None or fixed_rate is None or direction is None or notional is None:
-            print("None")
             raise PreventUpdate
         else:
             maturitydate = pd.to_datetime(maturity, format="%Y-%m-%d")
@@ -1982,7 +1966,6 @@ def update_swap_price(direction, notional, valuationdate, valuedate, maturity, d
         return no_update
     else:
         if valuationdate is None or valuedate is None or maturity is None or fixed_frequency is None or float_frequency is None or fixed_rate is None or direction is None or notional is None:
-            print("None")
             raise PreventUpdate
         else:
             maturitydate = pd.to_datetime(maturity, format="%Y-%m-%d")
@@ -2064,12 +2047,10 @@ def update_price(option, types, date, s0, strike, rate, sigma, n_simul, fen):
             P=Person(types)
             
             As_price = AsianMCPricer( O, P,float(sigma), n_simul, fen)
-            print(As_price.MC_price(s0, sigma))
             price = f"{As_price.MC_price(s0, sigma):.2f} €"
-            print(30*"*")
-            print(price)
+
             delta=f"{As_price.MC_delta():.2f}"
-            print(delta)
+
             gamma=f"{As_price.MC_gamma():.2f}"
             vega=f"{As_price.MC_vega():.2f}"
             
