@@ -525,6 +525,7 @@ def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max
         raise PreventUpdate
     else:
         O=Option(option,K=strike,T=get_relative_maturity(date),r=rate)
+        P = Person(types)
         T = get_relative_maturity(date)
         d1 = (np.log(O.S0 / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
         d2 = d1 - sigma * np.sqrt(O.T)
@@ -533,7 +534,12 @@ def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max
         def greek(S,grecque):
             d1 = (np.log(S / O.K) + (O.r + 0.5 * sigma**2) * O.T) / (sigma * np.sqrt(O.T))
             d2 = d1 - sigma * np.sqrt(O.T)
-            delta = norm.cdf(d1)
+            if P.type=="Call":
+                delta = norm.cdf(d1)
+            else:
+                delta = norm.cdf(d1)-1
+                
+           
             
     
                 # Gamma
@@ -543,10 +549,16 @@ def update_graph(option, types, date, s0, strike, rate, sigma, grecque,min_S,max
             vega = S * norm.pdf(d1) * np.sqrt(O.T)
     
                 # Theta
-            theta = -(S * norm.pdf(d1) * sigma) / (2 * np.sqrt(O.T)) - O.r * O.K * np.exp(-O.r * O.T) * norm.cdf(d2)
+            if P.type=="Call":
+                theta = -(S * norm.pdf(d1) * sigma) / (2 * np.sqrt(O.T)) - O.r * O.K * np.exp(-O.r * O.T) * norm.cdf(d2)
+            else:
+                theta = -(S * norm.pdf(d1) * sigma) / (2 * np.sqrt(O.T)) + O.r * O.K * np.exp(-O.r * O.T) * norm.cdf(-d2)
     
                 # Rho
-            rho = O.K * O.T * np.exp(-O.r * O.T) * norm.cdf(d2)
+            if P.type=="Call":
+                rho = O.K * O.T * np.exp(-O.r * O.T) * norm.cdf(d2)
+            else:
+                rho = -O.K * O.T * np.exp(-O.r * O.T) * norm.cdf(-d2)
             
             if grecque=="Delta":
                 return delta
